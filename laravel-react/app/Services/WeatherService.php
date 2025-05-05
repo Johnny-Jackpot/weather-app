@@ -2,11 +2,16 @@
 
 namespace App\Services;
 
+use InvalidArgumentException;
+
 class WeatherService
 {
     public function getWeatherData(string $city): array
     {
-        $apiKey = 'abc123weatherapikey';
+        $apiKey = config('services.weather.api_key');
+        if (!$apiKey) {
+            throw new InvalidArgumentException("Weather api key is not configured");
+        }
         $url = "https://api.weatherapi.com/v1/current.json?key={$apiKey}&q={$city}";
 
         $ch = curl_init();
