@@ -9,6 +9,9 @@ use Inertia\Inertia;
 //})->name('home');
 
 Route::get('/', [WeatherController::class, 'index'])->name('weather.index');
+Route::get('/weather', [WeatherController::class, 'weather'])
+    ->middleware(['throttle:60,1'])
+    ->name('weather.weather');
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -17,5 +20,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

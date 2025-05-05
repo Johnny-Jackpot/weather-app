@@ -4,29 +4,33 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Weather\WeatherException;
 use App\Services\WeatherService;
-use Exception;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class WeatherController extends Controller
 {
-    public function index(WeatherService $weatherService)
+    public function index()
     {
+        return Inertia::render('weather');
+    }
+
+    public function weather(Request $request, WeatherService $weatherService): JsonResponse
+    {
+        $city = $request->query('city');
+        if (!$city) {
+            return response()->json(['error' => 'Invalid city provided'], 400);
+        }
+
         try {
-            $weather = $weatherService->getWeather('London');
+            $weather = $weatherService->getWeather($city);
             $weatherService->log($weather);
-
-            echo "Текущая погода в {$weather->city}, {$weather->country}:\n";
-            echo "Температура: {$weather->temperature}°C\n";
-            echo "Состояние: {$weather->condition}\n";
-            echo "Влажность: {$weather->humidity}%\n";
-            echo "Скорость ветра: {$weather->windSpeed} км/ч\n";
-            echo "Последнее обновление: {$weather->lastUpdated}\n";
-
+            return response()->json(['data' => $weather]);
         } catch (WeatherException $e) {
-            echo "Ошибка: " . $e->getMessage();
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-            echo "Ошибка: Что то пошло не так";
+            return response()->json(['error' => $e->getMessage()], 500);
+        } catch (ConnectionException $e) {
+            return response()->json(['error' => 'Weather API is unavailable'], 500);
         }
     }
 }
