@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\Weather\WeatherException;
 use App\Services\WeatherService;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class WeatherController extends Controller
 {
@@ -12,6 +13,8 @@ class WeatherController extends Controller
     {
         try {
             $weather = $weatherService->getWeather('London');
+            $weatherService->log($weather);
+
             echo "Текущая погода в {$weather->city}, {$weather->country}:\n";
             echo "Температура: {$weather->temperature}°C\n";
             echo "Состояние: {$weather->condition}\n";
@@ -22,6 +25,7 @@ class WeatherController extends Controller
         } catch (WeatherException $e) {
             echo "Ошибка: " . $e->getMessage();
         } catch (Exception $e) {
+            Log::error($e->getMessage());
             echo "Ошибка: Что то пошло не так";
         }
     }

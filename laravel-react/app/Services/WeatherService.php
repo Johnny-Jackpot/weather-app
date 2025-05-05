@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\WeatherDTO;
 use App\Exceptions\Weather\WeatherException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class WeatherService
@@ -44,6 +45,14 @@ class WeatherService
             windSpeed: $data['current']['wind_kph'],
             lastUpdated: $data['current']['last_updated']
         );
-//            file_put_contents('weather_log.txt', date('Y-m-d H:i:s') . " - Погода в {$result['city']}: {$result['temperature']}°C, {$result['condition']}\n", FILE_APPEND);
+    }
+
+    public function log(WeatherDTO $weatherDTO): void
+    {
+        Log::channel('weather')->info('Weather in {city}: {temp}°C, {cond}', [
+            'city' => $weatherDTO->city,
+            'temp' => $weatherDTO->temperature,
+            'cond' => $weatherDTO->condition,
+        ]);
     }
 }
