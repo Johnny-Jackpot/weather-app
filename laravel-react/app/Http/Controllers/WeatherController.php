@@ -2,23 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Weather\WeatherException;
 use App\Services\WeatherService;
-use Illuminate\Http\Request;
+use Exception;
 
 class WeatherController extends Controller
 {
     public function index(WeatherService $weatherService)
     {
-        $weatherData = $weatherService->getWeatherData('London');
-        if (isset($weatherData['error'])) {
-            echo "Ошибка: " . $weatherData['error'];
-        } else {
-            echo "Текущая погода в {$weatherData['city']}, {$weatherData['country']}:\n";
-            echo "Температура: {$weatherData['temperature']}°C\n";
-            echo "Состояние: {$weatherData['condition']}\n";
-            echo "Влажность: {$weatherData['humidity']}%\n";
-            echo "Скорость ветра: {$weatherData['wind_speed']} км/ч\n";
-            echo "Последнее обновление: {$weatherData['last_updated']}\n";
+        try {
+            $weather = $weatherService->getWeather('London');
+            echo "Текущая погода в {$weather->city}, {$weather->country}:\n";
+            echo "Температура: {$weather->temperature}°C\n";
+            echo "Состояние: {$weather->condition}\n";
+            echo "Влажность: {$weather->humidity}%\n";
+            echo "Скорость ветра: {$weather->windSpeed} км/ч\n";
+            echo "Последнее обновление: {$weather->lastUpdated}\n";
+
+        } catch (WeatherException $e) {
+            echo "Ошибка: " . $e->getMessage();
+        } catch (Exception $e) {
+            echo "Ошибка: Что то пошло не так";
         }
     }
 }

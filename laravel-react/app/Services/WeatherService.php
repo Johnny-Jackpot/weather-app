@@ -2,49 +2,48 @@
 
 namespace App\Services;
 
+use App\DTO\WeatherDTO;
+use App\Exceptions\Weather\WeatherException;
+use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 
 class WeatherService
 {
-    public function getWeatherData(string $city): array
+    protected const PATH = 'https://api.weatherapi.com/v1/current.json';
+
+    public function getWeather(string $city): WeatherDTO
     {
         $apiKey = config('services.weather.api_key');
         if (!$apiKey) {
             throw new InvalidArgumentException("Weather api key is not configured");
         }
-        $url = "https://api.weatherapi.com/v1/current.json?key={$apiKey}&q={$city}";
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        $response = curl_exec($ch);
+        $response = Http::withQueryParameters([
+            'key' => $apiKey,
+            'q' => $city
+        ])->get(static::PATH);
 
-        if (curl_errno($ch)) {
-            $error = 'Curl error: ' . curl_error($ch);
-            curl_close($ch);
-            return ['error' => $error];
+        // Determine if the response has a 400 level status code...
+        if ($response->clientError()) {
+            throw new WeatherException($response->json()['error']['message']);
         }
 
-        curl_close($ch);
-        $data = json_decode($response, true);
-
-        if (isset($data['error'])) {
-            return ['error' => $data['error']['message']];
+        // Determine if the response has a 500 level status code...
+        if ($response->serverError()) {
+            throw new WeatherException('Something went wrong');
         }
 
-        $result = [
-            'city' => $data['location']['name'],
-            'country' => $data['location']['country'],
-            'temperature' => $data['current']['temp_c'],
-            'condition' => $data['current']['condition']['text'],
-            'humidity' => $data['current']['humidity'],
-            'wind_speed' => $data['current']['wind_kph'],
-            'last_updated' => $data['current']['last_updated'],
-        ];
+        $data = $response->json();
 
+        return new WeatherDTO(
+            city: $data['location']['name'],
+            country: $data['location']['country'],
+            temperature: $data['current']['temp_c'],
+            condition: $data['current']['condition']['text'],
+            humidity: $data['current']['humidity'],
+            windSpeed: $data['current']['wind_kph'],
+            lastUpdated: $data['current']['last_updated']
+        );
 //            file_put_contents('weather_log.txt', date('Y-m-d H:i:s') . " - Погода в {$result['city']}: {$result['temperature']}°C, {$result['condition']}\n", FILE_APPEND);
-
-        return $result;
     }
 }

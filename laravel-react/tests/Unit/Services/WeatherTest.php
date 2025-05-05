@@ -12,6 +12,6 @@ test('Weather api key is configured', function () {
 test('Weather service throws exception when no api key provided', function () {
     config()->set('services.weather.api_key', null);
     $weatherService = resolve(WeatherService::class);
-    $weatherService->getWeatherData('London');
+    $weatherService->getWeather('London');
 })->throws(InvalidArgumentException::class, 'Weather api key is not configured');
 
