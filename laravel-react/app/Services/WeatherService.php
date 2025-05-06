@@ -60,6 +60,7 @@ class WeatherService
 
         // Determine if the response has a 500 level status code...
         if ($response->serverError()) {
+            //Weather api docs does not describe 500 errors
             throw new WeatherException('Something went wrong');
         }
 
